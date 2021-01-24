@@ -8,3 +8,12 @@ class Settings:
         self.screen_width = 1200
         self.screen_height = 800
         self.background_color = (230, 230, 230)
+
+        # Настройки корабля
+        self.ship_speed = 1.25
+
+        # Настройки выстрелов
+        self.bullet_speed = 2
+        self.bullet_width = 3
+        self.bullet_height = 15
+        self.bullet_color = (220, 20, 60)
