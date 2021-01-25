@@ -48,6 +48,8 @@ class Ship:
         self.rect.x = self.x
 
     def blitme(self):
-
+        """
+        Вывод картинки bmp на экран
+        """
         # Рисует корабль в текущей позиции
         self.screen.blit(self.image, self.rect)

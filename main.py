@@ -33,7 +33,7 @@ class AlienInvasion:
         while True:
             self._check_events()
             self.ship.update()
-            self.bullets.update()  # Вызывает bullet.update() для каждого снаряда в группе self.bullets
+            self._update_bullets()
             self._update_screen()
 
     def _check_events(self):
@@ -55,13 +55,14 @@ class AlienInvasion:
         """
         Реагирует на нажатие клавиш.
         """
+        # Действия при нажатии клавиш перемещения -> <-
         if event.key == pygame.K_RIGHT:
             self.ship.moving_right = True
         elif event.key == pygame.K_LEFT:
             self.ship.moving_left = True
         elif event.key == pygame.K_q:
             sys.exit()
-
+        # Добпавление действия при нажатии кнопки пробела
         elif event.key == pygame.K_SPACE:
             self.fire_bullet()
 
@@ -78,8 +79,23 @@ class AlienInvasion:
         """
         Создание нового снаряда и включение его в группу bullets
         """
-        new_bullet = Bullet(self)
-        self.bullets.add(new_bullet)
+        # Сначала проверим, что количество уже летящих на экране снарядов не болшье разрешенного значения (3)
+        if len(self.bullets) < self.settings.bullets_allowed:
+            new_bullet = Bullet(self)
+            self.bullets.add(new_bullet)
+
+    def _update_bullets(self):
+        """
+        Обновляет позиции срарядов и удаляет старые снаряды
+        """
+        # Вызываем bullet.update() для каждого снаряда в группе self.bullets
+        self.bullets.update()
+
+        # Удаление снарядов, вышедших за край экрана. Иначе они существуют за его пределами и потребляют память
+        # Сам список bullets в цикле изменять нельзя, пожтому изменять будет его копию .copy()
+        for bullet in self.bullets.copy():
+            if bullet.rect.bottom <= 0:
+                self.bullets.remove(bullet)
 
     def _update_screen(self):
         # Заполенение экрана нужным цветом
@@ -88,7 +104,7 @@ class AlienInvasion:
         # Выводит изображение корабля на экран в позиции, заданной self.rect
         self.ship.blitme()
 
-        # TODO
+        # Перебор всех bullet в спрайте(группы) bullets и прорисовка каждой
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
 
