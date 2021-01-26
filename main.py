@@ -3,7 +3,7 @@ import pygame
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
-
+from alien import Alien
 
 class AlienInvasion:
     """
@@ -25,6 +25,10 @@ class AlienInvasion:
 
         # Группа для хранения всех летящих снарядов
         self.bullets = pygame.sprite.Group()
+
+        # Группа для хранения всех пришельцев
+        self.aliens = pygame.sprite.Group()
+        self._create_fleet()
 
     def run_game(self):
         """
@@ -97,6 +101,39 @@ class AlienInvasion:
             if bullet.rect.bottom <= 0:
                 self.bullets.remove(bullet)
 
+    def _create_fleet(self):
+        """
+        Создание флота вторжения
+        """
+        # Создание пришельца и вычисление допустимого количества пришельцев в ряду
+        # Интервал между пришельцами равен ширине пришельца
+        alien = Alien(self)
+        alien_width, alien_height = alien.rect.size
+        ship_height = self.ship.rect.height
+
+        available_space_x = self.settings.screen_width - (2 * alien_width)
+        number_aliens_x = available_space_x // (2 * alien_width)
+
+        available_space_y = self.settings.screen_height - (2 * alien_height) - ship_height * 4
+        number_rows = available_space_y // (2 * alien_height)
+
+        # Создание первого ряда пришельцев
+        for row_number in range(number_rows):
+            for alien_number in range(number_aliens_x):
+                self._create_alien(alien_number, row_number)
+
+    def _create_alien(self, alien_number, row_number):
+        """
+        Создание пришельца и размещение его в ряду, добавление его в группу Sprite
+        """
+        alien = Alien(self)
+        # Атрибут size содержит коржтеж из значений ширины и высоты rect
+        alien_width, alien_height = alien.rect.size
+        alien.x = alien_width + 2 * alien_width * alien_number
+        alien.rect.x = alien.x
+        alien.rect.y = alien.rect.height + 2 * alien.rect.height * row_number
+        self.aliens.add(alien)
+
     def _update_screen(self):
         # Заполенение экрана нужным цветом
         self.screen.fill(self.settings.background_color)
@@ -107,6 +144,9 @@ class AlienInvasion:
         # Перебор всех bullet в спрайте(группы) bullets и прорисовка каждой
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
+
+        # Специальный метод pygame для вывода всей группы на поверхность(получаемый аргумент)
+        self.aliens.draw(self.screen)
 
         # Отображение последнего прорисованного экрана
         pygame.display.flip()
