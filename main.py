@@ -5,6 +5,7 @@ from ship import Ship
 from bullet import Bullet
 from alien import Alien
 
+
 class AlienInvasion:
     """
     Класс для управления ресурсами и поведением игры
@@ -38,6 +39,7 @@ class AlienInvasion:
             self._check_events()
             self.ship.update()
             self._update_bullets()
+            self._update_aliens()
             self._update_screen()
 
     def _check_events(self):
@@ -101,6 +103,22 @@ class AlienInvasion:
             if bullet.rect.bottom <= 0:
                 self.bullets.remove(bullet)
 
+        self._check_bullet_alien_collision()
+
+    def _check_bullet_alien_collision(self):
+        """
+        Обработка коллизий снарядов с пришельцами
+        """
+        # Проверка попадений в пришельцев (коллизий) с помощью sprite.groupcollide()
+        # True, True обозначает, что нужно удалять каждый объект после столкновения
+        collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, False, True)
+
+        # Удаление существующих снарядов после поражения последнего пришельца и создание нового флота
+        # Метод empty() удаляет все спрайты(объекты группы) из группы
+        if not self.aliens:
+            self.bullets.empty()
+            self._create_fleet()
+
     def _create_fleet(self):
         """
         Создание флота вторжения
@@ -119,7 +137,7 @@ class AlienInvasion:
 
         # Создание первого ряда пришельцев
         for row_number in range(number_rows):
-            for alien_number in range(number_aliens_x):
+            for alien_number in range(number_aliens_x - 1):
                 self._create_alien(alien_number, row_number)
 
     def _create_alien(self, alien_number, row_number):
@@ -133,6 +151,32 @@ class AlienInvasion:
         alien.rect.x = alien.x
         alien.rect.y = alien.rect.height + 2 * alien.rect.height * row_number
         self.aliens.add(alien)
+
+    def _check_fleet_edges(self):
+        """
+        Реагирует на достижение пришельцем края экрана
+        """
+        for alien in self.aliens.sprites():
+            if alien.check_edges():
+                self._change_fleet_direction()
+                break
+
+    def _change_fleet_direction(self):
+        """
+        Опускает весь флот и меняет его направление движения
+        """
+        for alien in self.aliens.sprites():
+            alien.rect.y += self.settings.fleet_drop_speed
+        self.settings.fleet_direction *= -1
+
+    def _update_aliens(self):
+        """
+        Проверяет достиг ли флот края экрана и
+        обновляет позиции всех пришельцев во флоте
+        """
+        self._check_fleet_edges()
+        # Вызываем aliens.update() для каждого снаряда в группе self.aliens
+        self.aliens.update()
 
     def _update_screen(self):
         # Заполенение экрана нужным цветом

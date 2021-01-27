@@ -14,7 +14,13 @@ class Settings:
 
         # Настройки выстрелов
         self.bullet_speed = 1
-        self.bullet_width = 3
+        self.bullet_width = 3000
         self.bullet_height = 15
         self.bullet_color = (220, 20, 60)
         self.bullets_allowed = 3
+        
+        # Настройки пришельцев
+        self.alien_speed = 0.5
+        self.fleet_drop_speed = 5
+        # fleet_direction = 1 означает движение враво, -1 влево
+        self.fleet_direction = 1
