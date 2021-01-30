@@ -1,9 +1,12 @@
 import sys
+from time import sleep
 import pygame
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
+from game_stats import GameStats
+from button import Button
 
 
 class AlienInvasion:
@@ -21,6 +24,9 @@ class AlienInvasion:
         self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
         pygame.display.set_caption('Alien Invasion')
 
+        # Создание экземпляра для хранения игровой статистики
+        self.stats = GameStats(self)
+
         # Создание экземпляра корабля
         self.ship = Ship(self)
 
@@ -31,15 +37,22 @@ class AlienInvasion:
         self.aliens = pygame.sprite.Group()
         self._create_fleet()
 
+        # Создание кнопки Play
+        self.play_button = Button(self, 'Play')
+
     def run_game(self):
         """
         Запуск основного цикла игры
         """
         while True:
             self._check_events()
-            self.ship.update()
-            self._update_bullets()
-            self._update_aliens()
+
+            # Отделим части игры, которые должны выподлняться только при активной игре (game_active = True)
+            if self.stats.game_active:
+                self.ship.update()
+                self._update_bullets()
+                self._update_aliens()
+
             self._update_screen()
 
     def _check_events(self):
@@ -56,6 +69,18 @@ class AlienInvasion:
             # Блок отвечающий за действие при отжатии клавиши (прекратить движение корабля)
             elif event.type == pygame.KEYUP:
                 self._check_keyup_events(event)
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                self._check_play_button(mouse_pos)
+
+    def _check_play_button(self, mouse_pos):
+        """
+        Запускает новую игру при нажатии кнопки Play
+        """
+        # Проверяет находится ли точка щелчка в пределах прямоугольника Play
+        if self.play_button.rect.collidepoint(mouse_pos):
+            self.stats.game_active = True
 
     def _check_keydown_events(self, event):
         """
@@ -171,12 +196,53 @@ class AlienInvasion:
 
     def _update_aliens(self):
         """
-        Проверяет достиг ли флот края экрана и
-        обновляет позиции всех пришельцев во флоте
+        Проверяет достиг ли флот края экрана и обновляет позиции всех пришельцев во флоте
         """
         self._check_fleet_edges()
         # Вызываем aliens.update() для каждого снаряда в группе self.aliens
         self.aliens.update()
+
+        # Проверка коллизий корабль - пришелец
+        if pygame.sprite.spritecollideany(self.ship, self.aliens):
+            self._ship_hit()
+
+        # Проверяет добрались ли пришельцы до нижнего края экрана
+        self._check_aliens_bottom()
+
+    def _ship_hit(self):
+        """
+        Обрабатывает столкнокение корабля с пришельцем
+        """
+        if self.stats.ships_left > 0:
+            # Уменьшение количества жизней на 1
+            self.stats.ships_left -= 1
+
+            # Очистка кораблей и снарядов
+            self.bullets.empty()
+            self.aliens.empty()
+
+            # Создание нового флота и размещение корабля в центре
+            self._create_fleet()
+            self.ship.center_ship()
+
+            # Пауза
+            sleep(0.5)
+        else:
+            self.stats.game_active = False
+
+    def _check_aliens_bottom(self):
+        """
+        Проверяет добрались ли пришельцы до нижнего края экрана
+        """
+        if self.stats.ships_left > 0:
+            screen_rect = self.screen.get_rect()
+            for alien in self.aliens.sprites():
+                if alien.rect.bottom >= screen_rect.bottom:
+                    # Происхоит тоже, что при столкновении с кораблем
+                    self._ship_hit()
+                    break
+        else:
+            self.stats.game_active = False
 
     def _update_screen(self):
         # Заполенение экрана нужным цветом
@@ -191,6 +257,10 @@ class AlienInvasion:
 
         # Специальный метод pygame для вывода всей группы на поверхность(получаемый аргумент)
         self.aliens.draw(self.screen)
+
+        # Кнопка Play отображается только когда игра не активна
+        if not self.stats.game_active:
+            self.play_button.draw_button()
 
         # Отображение последнего прорисованного экрана
         pygame.display.flip()
