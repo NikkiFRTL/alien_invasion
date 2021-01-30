@@ -78,9 +78,25 @@ class AlienInvasion:
         """
         Запускает новую игру при нажатии кнопки Play
         """
-        # Проверяет находится ли точка щелчка в пределах прямоугольника Play
-        if self.play_button.rect.collidepoint(mouse_pos):
+        # Проверяет находится ли точка щелчка в пределах прямоугольника
+        # и отмена реакции клика по квадрату, если игра активна
+        mouse_on_play = self.play_button.rect.collidepoint(mouse_pos)
+        if mouse_on_play and not self.stats.game_active:
+            # Сброс игровой статистики
+            self.settings.initialize_dynamic_settings()  # Увеличение скорости игры
+            self.stats.reset_stats()
             self.stats.game_active = True
+
+            # Очистка списков пришельцев и снарядов
+            self.aliens.empty()
+            self.bullets.empty()
+
+            # Создание нового флота и размещение корабля в центре
+            self._create_fleet()
+            self.ship.center_ship()
+
+            # Спрятать указаьель мыши во время игры
+            pygame.mouse.set_visible(False)
 
     def _check_keydown_events(self, event):
         """
@@ -136,13 +152,15 @@ class AlienInvasion:
         """
         # Проверка попадений в пришельцев (коллизий) с помощью sprite.groupcollide()
         # True, True обозначает, что нужно удалять каждый объект после столкновения
-        collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, False, True)
+        collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
 
         # Удаление существующих снарядов после поражения последнего пришельца и создание нового флота
         # Метод empty() удаляет все спрайты(объекты группы) из группы
         if not self.aliens:
             self.bullets.empty()
             self._create_fleet()
+            # Ускорение игры в 1.1 раз
+            self.settings.increase_speed()
 
     def _create_fleet(self):
         """
