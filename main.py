@@ -7,6 +7,7 @@ from bullet import Bullet
 from alien import Alien
 from game_stats import GameStats
 from button import Button
+from scoreboard import Scoreboard
 
 
 class AlienInvasion:
@@ -26,6 +27,9 @@ class AlienInvasion:
 
         # Создание экземпляра для хранения игровой статистики
         self.stats = GameStats(self)
+
+        # Создание экземпляра Scoreboard
+        self.scoreboard = Scoreboard(self)
 
         # Создание экземпляра корабля
         self.ship = Ship(self)
@@ -86,6 +90,8 @@ class AlienInvasion:
             self.settings.initialize_dynamic_settings()  # Увеличение скорости игры
             self.stats.reset_stats()
             self.stats.game_active = True
+            self.scoreboard.prep_score()
+            self.scoreboard.prep_level()
 
             # Очистка списков пришельцев и снарядов
             self.aliens.empty()
@@ -154,6 +160,13 @@ class AlienInvasion:
         # True, True обозначает, что нужно удалять каждый объект после столкновения
         collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
 
+        # Проверка есть ли попадение в прищельца и добавление очков за него
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points * len(aliens)
+            self.scoreboard.prep_score()
+            self.scoreboard.check_high_score()
+
         # Удаление существующих снарядов после поражения последнего пришельца и создание нового флота
         # Метод empty() удаляет все спрайты(объекты группы) из группы
         if not self.aliens:
@@ -161,6 +174,10 @@ class AlienInvasion:
             self._create_fleet()
             # Ускорение игры в 1.1 раз
             self.settings.increase_speed()
+
+            # Увеличение номера уровня
+            self.stats.level += 1
+            self.scoreboard.prep_level()
 
     def _create_fleet(self):
         """
@@ -275,6 +292,9 @@ class AlienInvasion:
 
         # Специальный метод pygame для вывода всей группы на поверхность(получаемый аргумент)
         self.aliens.draw(self.screen)
+
+        # Вывод инфолрмации о счете
+        self.scoreboard.show_score()
 
         # Кнопка Play отображается только когда игра не активна
         if not self.stats.game_active:
