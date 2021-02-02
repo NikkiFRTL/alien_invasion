@@ -1,12 +1,13 @@
 import pygame
+from pygame.sprite import Sprite
 
-
-class Ship:
+class Ship(Sprite):
     """
     Создание класа корабль содержащий его поведение
     """
 
     def __init__(self, ai):
+        super().__init__()
         # Инициалицируем корабль и задаем его начальную позицию
         self.screen = ai.screen
         # Создается, чтобы его можно было использовать в update()

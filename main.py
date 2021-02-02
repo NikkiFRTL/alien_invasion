@@ -91,7 +91,9 @@ class AlienInvasion:
             self.stats.reset_stats()
             self.stats.game_active = True
             self.scoreboard.prep_score()
+            self.scoreboard.prep_high_score()
             self.scoreboard.prep_level()
+            self.scoreboard.prep_ships()
 
             # Очистка списков пришельцев и снарядов
             self.aliens.empty()
@@ -158,7 +160,7 @@ class AlienInvasion:
         """
         # Проверка попадений в пришельцев (коллизий) с помощью sprite.groupcollide()
         # True, True обозначает, что нужно удалять каждый объект после столкновения
-        collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
+        collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, False, True)
 
         # Проверка есть ли попадение в прищельца и добавление очков за него
         if collisions:
@@ -249,8 +251,9 @@ class AlienInvasion:
         Обрабатывает столкнокение корабля с пришельцем
         """
         if self.stats.ships_left > 0:
-            # Уменьшение количества жизней на 1
+            # Уменьшение количества жизней корабля на 1
             self.stats.ships_left -= 1
+            self.scoreboard.prep_ships()
 
             # Очистка кораблей и снарядов
             self.bullets.empty()
